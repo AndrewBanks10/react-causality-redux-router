@@ -1,0 +1,38 @@
+{
+  "name": "react-causality-redux-router",
+  "version": "0.0.1",
+  "description": "Causality based extension of react-router",
+  "main": "lib/react-causality-redux-router.js",
+  "scripts": {
+    "test": "mocha --reporter spec ./test/test.js",
+    "debugtest": "mocha --debug-brk --inspect ./test/test.js",
+    "build": "npm run build:es && npm run build:min",
+    "build:es": "cross-env NODE_ENV=none webpack --config webpack.config.js",
+    "build:min": "cross-env NODE_ENV=min webpack --config webpack.config.js"
+  },
+  "author": {
+    "name": "Andrew Banks",
+    "email": "andrewbanks10@gmail.com"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "cross-env": "^5.0.0",
+    "jsdom": "^2.0.0",
+    "mocha": "^3.3.0",
+    "webpack": "^2.5.1",
+    "webpack-closure-compiler": "^2.1.4",
+    "lodash": "^4.17.4"
+  },
+  "dependencies": {
+    "causality-redux": "^2.1.11",
+    "history": "^4.7.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AndrewBanks10/react-causality-redux"
+  }
+}
