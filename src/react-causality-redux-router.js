@@ -1,4 +1,3 @@
-
 import CausalityRedux from 'causality-redux';
 import createBrowserHistory from 'history/createBrowserHistory';
 
@@ -34,7 +33,6 @@ const handleListen = (location, action) => {
 };
 
 export default function cBH(paramObj) {
-    console.log('history');
     if (!history) {
         history = createBrowserHistory(paramObj);
         history.listen((location, action) => {
@@ -45,12 +43,31 @@ export default function cBH(paramObj) {
     return history;
 }
 
-export const internalHistory = () => {
-    return {
-        activeURL,
-        historyCache
-    };
+export const setHistoryState = (state) => {
+    if (!history)
+        return;    
+    if (typeof state === 'undefined' || typeof state[CausalityRedux.storeVersionKey] === 'undefined')
+        throw new Error('Invalid 1st argument.');  
+
+    const storeVersion = state[CausalityRedux.storeVersionKey];
+    const arrHC = Object.keys(historyCache);
+    const h = [];
+    arrHC.forEach(e => {
+        h.push({url: e, storeVersion: historyCache[e][CausalityRedux.storeVersionKey] });
+    });
+
+    h.sort((a, b) => {
+        if (a.storeVersion < b.storeVersion)
+            return -1;
+        if (a.storeVersion > b.storeVersion)
+            return 1;
+        return 0;
+    });
+
+    for (let i = h.length - 1; i >= 0 && storeVersion < h[i].storeVersion; --i)
+        historyCache[h[i].url] = state;
 };
+
 
 
 
