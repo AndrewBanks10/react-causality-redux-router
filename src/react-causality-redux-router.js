@@ -7,27 +7,64 @@ if ( typeof CausalityRedux === 'undefined')
 if ( typeof createBrowserHistory === 'undefined')
     throw new Error('createBrowserHistory not found from history/createBrowserHistory.');
 
+const startKey = '@@@CR@@@'; 
 const historyCache = {};
-let activeURL = '';
+let activeKey = startKey;
 export let history = null;
 
-const transitionFromCurrentState = (pathname) => {
-    historyCache[activeURL] = CausalityRedux.store.getState();
-    activeURL = pathname;
+const isCausalityReduxComponent = (obj) =>
+    typeof obj !== 'undefined' && typeof obj.prototype !== 'undefined' && typeof obj.prototype.isCausalityReduxComponent !== 'undefined';
+
+const isCausalityReduxPartition = (key) =>
+    key !== CausalityRedux.storeVersionKey;
+
+const shallowCopyReduxStore = (store) => {
+    let storeCopy = CausalityRedux.shallowCopy(store);
+    CausalityRedux.getKeys(storeCopy).forEach(key => {
+        storeCopy[key] = CausalityRedux.shallowCopy(store[key]);
+    });
+    return storeCopy;
+};
+
+const transitionFromCurrentState = (key) => {
+    key = typeof key === 'undefined' ? startKey : key;
+    const currentState = shallowCopyReduxStore(CausalityRedux.store.getState());
+    //
+    // If any new conponents have been added to the store as a result of hot-reloading
+    // then copy the new component everywhere in the history cache.
+    // Since hot reloading does not happen in production then this is for development only.
+    //
+    if (process.env.NODE_ENV !== 'production') {
+        CausalityRedux.getKeys(currentState).forEach(topLevelKey => {
+            if (isCausalityReduxPartition(topLevelKey)) {
+                const partition = currentState[topLevelKey];
+                CausalityRedux.getKeys(partition).forEach(partitionKey => {
+                    if (isCausalityReduxComponent(partition[partitionKey])) {
+                        CausalityRedux.getKeys(historyCache).forEach(historyKey => {
+                            if (typeof historyCache[historyKey][topLevelKey][partitionKey] !== 'undefined')
+                                historyCache[historyKey][topLevelKey][partitionKey] = partition[partitionKey];
+                        });
+                    }
+                });
+            }
+        });
+    }
+    historyCache[activeKey] = currentState;
+    activeKey = key;
 };
 
 const handleListen = (location, action) => {
     switch (action) {
         case 'PUSH':
-            transitionFromCurrentState(location.pathname);
+            transitionFromCurrentState(location.key);
             break;
         case 'POP':
-            transitionFromCurrentState(location.pathname);
-            if (historyCache[activeURL])
-                CausalityRedux.copyState(historyCache[activeURL]);
+            transitionFromCurrentState(location.key);
+            if (historyCache[activeKey])
+                CausalityRedux.copyState(historyCache[activeKey]);
             break;
         case 'REPLACE':
-            activeURL = location.pathname;
+            activeKey = location.key;
             break;
     }
 };
@@ -39,7 +76,6 @@ export default function cBH(paramObj) {
             handleListen(location, action);
         });
     }
-    activeURL = history.location.pathname;
     return history;
 }
 
@@ -53,7 +89,7 @@ export const setHistoryState = (state) => {
     const arrHC = Object.keys(historyCache);
     const h = [];
     arrHC.forEach(e => {
-        h.push({url: e, storeVersion: historyCache[e][CausalityRedux.storeVersionKey] });
+        h.push({key: e, storeVersion: historyCache[e][CausalityRedux.storeVersionKey] });
     });
 
     h.sort((a, b) => {
@@ -65,11 +101,5 @@ export const setHistoryState = (state) => {
     });
 
     for (let i = h.length - 1; i >= 0 && storeVersion < h[i].storeVersion; --i)
-        historyCache[h[i].url] = state;
+        historyCache[h[i].key] = shallowCopyReduxStore(state);
 };
-
-
-
-
-
-
