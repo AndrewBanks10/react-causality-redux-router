@@ -742,8 +742,8 @@ var historyCache = {};
 var activeKey = startKey;
 var history = exports.history = null;
 
-var isCausalityReduxComponent = function isCausalityReduxComponent(obj) {
-    return typeof obj !== 'undefined' && typeof obj.prototype !== 'undefined' && typeof obj.prototype.isCausalityReduxComponent !== 'undefined';
+var isCausalityReduxComponent = function isCausalityReduxComponent(val) {
+    return typeof val === 'function' && val.prototype !== 'undefined' && typeof val.prototype.isCausalityReduxComponent !== 'undefined';
 };
 
 var isCausalityReduxPartition = function isCausalityReduxPartition(key) {

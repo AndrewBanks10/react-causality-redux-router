@@ -12,14 +12,14 @@ const historyCache = {};
 let activeKey = startKey;
 export let history = null;
 
-const isCausalityReduxComponent = (obj) =>
-    typeof obj !== 'undefined' && typeof obj.prototype !== 'undefined' && typeof obj.prototype.isCausalityReduxComponent !== 'undefined';
+const isCausalityReduxComponent = val =>
+    typeof val === 'function' && val.prototype !== 'undefined' && typeof val.prototype.isCausalityReduxComponent !== 'undefined';  
 
 const isCausalityReduxPartition = (key) =>
     key !== CausalityRedux.storeVersionKey;
 
 const shallowCopyReduxStore = (store) => {
-    let storeCopy = CausalityRedux.shallowCopy(store);
+    const storeCopy = CausalityRedux.shallowCopy(store);
     CausalityRedux.getKeys(storeCopy).forEach(key => {
         storeCopy[key] = CausalityRedux.shallowCopy(store[key]);
     });
