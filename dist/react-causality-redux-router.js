@@ -718,9 +718,8 @@ module.exports = CausalityRedux;
 /* WEBPACK VAR INJECTION */(function(process) {
 
 Object.defineProperty(exports, "__esModule", {
-    value: true
+  value: true
 });
-exports.history = undefined;
 exports.default = cBH;
 
 var _causalityRedux = __webpack_require__(4);
@@ -738,44 +737,44 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 
 var AsyncWait = function () {
-    var _defaultTimeout = 250;
-    var _defaultMili = 15;
-    var _startTime = void 0;
-    var _intervalId = void 0;
-    var _success = void 0;
-    var _fail = void 0;
-    var _testfunction = void 0;
+  var _defaultTimeout = 250;
+  var _defaultMili = 15;
+  var _startTime = void 0;
+  var _intervalId = void 0;
+  var _success = void 0;
+  var _fail = void 0;
+  var _testfunction = void 0;
 
-    function checkFunction() {
-        if (_testfunction()) {
-            clearInterval(_intervalId);
-            _success();
-        } else if (new Date() - _startTime > this.defaultTimeout) {
-            clearInterval(_intervalId);
-            _fail();
-        }
+  function checkFunction() {
+    if (_testfunction()) {
+      clearInterval(_intervalId);
+      _success();
+    } else if (new Date() - _startTime > this.defaultTimeout) {
+      clearInterval(_intervalId);
+      _fail();
     }
+  }
 
-    function AsyncWait() {
-        var defaultTimeout = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _defaultTimeout;
-        var defaultMili = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : _defaultMili;
+  function AsyncWait() {
+    var defaultTimeout = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _defaultTimeout;
+    var defaultMili = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : _defaultMili;
 
-        this.defaultTimeout = defaultTimeout;
-        this.defaultMili = defaultMili;
+    this.defaultTimeout = defaultTimeout;
+    this.defaultMili = defaultMili;
+  }
+
+  AsyncWait.prototype = {
+    constructor: AsyncWait,
+    wait: function wait(testfunction, success, fail) {
+      _startTime = new Date();
+      _intervalId = setInterval(checkFunction, this.defaultMili);
+      _success = success;
+      _fail = fail;
+      _testfunction = testfunction;
     }
+  };
 
-    AsyncWait.prototype = {
-        constructor: AsyncWait,
-        wait: function wait(testfunction, success, fail) {
-            _startTime = new Date();
-            _intervalId = setInterval(checkFunction, this.defaultMili);
-            _success = success;
-            _fail = fail;
-            _testfunction = testfunction;
-        }
-    };
-
-    return AsyncWait;
+  return AsyncWait;
 }();
 
 var startKey = '@@@CR@@@';
@@ -785,7 +784,10 @@ var asyncWait = new AsyncWait();
 var historyCache = {};
 var activeKey = startKey;
 var historyStore = null;
-var history = exports.history = null;
+
+// ??? export let history = null
+var history = null;
+
 var isMonitor = false;
 var unlisten = void 0;
 var historyStackIndex = void 0;
@@ -793,244 +795,293 @@ var newKeys = [];
 var historyItem = { index: -1, stack: [] };
 
 var hasSessionStorage = function hasSessionStorage() {
-    return typeof sessionStorage !== 'undefined';
+  return typeof sessionStorage !== 'undefined';
 };
 
 var readSessionItem = function readSessionItem(key) {
-    if (!hasSessionStorage()) return '';
-    return sessionStorage.getItem(key);
+  if (!hasSessionStorage()) {
+    return '';
+  }
+  return sessionStorage.getItem(key);
 };
 
 var writeSessionItem = function writeSessionItem(key, data) {
-    if (!hasSessionStorage()) return;
-    sessionStorage.setItem(key, data);
+  if (!hasSessionStorage()) {
+    return;
+  }
+  sessionStorage.setItem(key, data);
 };
 
 var writeHistory = function writeHistory() {
-    writeSessionItem(sessionKey, JSON.stringify(historyItem));
-    if (process.env.NODE_ENV !== 'production') {
-        if (isMonitor) {
-            var h = {};
-            h.activeKey = activeKey;
-            h.stack = [].concat(_toConsumableArray(historyItem.stack));
-            h.index = historyItem.index;
-            h.historyCache = shallowCopy(historyCache);
-            historyStore.setState(h);
-        }
+  writeSessionItem(sessionKey, JSON.stringify(historyItem));
+  if (process.env.NODE_ENV !== 'production') {
+    if (isMonitor) {
+      var h = {};
+      h.activeKey = activeKey;
+      h.stack = [].concat(_toConsumableArray(historyItem.stack));
+      h.index = historyItem.index;
+      h.historyCache = shallowCopy(historyCache);
+      historyStore.setState(h);
     }
+  }
 };
 
 var readHistory = function readHistory() {
-    var item = readSessionItem(sessionKey);
-    if (item) historyItem = JSON.parse(item);
+  var item = readSessionItem(sessionKey);
+  if (item) {
+    historyItem = JSON.parse(item);
+  }
 };
 
 var isCausalityReduxPartition = function isCausalityReduxPartition(key) {
-    return key !== _causalityRedux2.default.storeVersionKey;
+  return key !== _causalityRedux2.default.storeVersionKey;
 };
 
 var handleHotReloadedComponents = function handleHotReloadedComponents(state) {
-    //
-    // If any new component(s) have been added to the store as a result of hot-reloading
-    // then copy the new component(s) everywhere in the history cache.
-    // Since hot reloading does not happen in production then this is for development only.
-    //
-    if (process.env.NODE_ENV !== 'production') {
-        _causalityRedux2.default.getKeys(state).forEach(function (topLevelKey) {
-            if (isCausalityReduxPartition(topLevelKey)) {
-                var partition = state[topLevelKey];
-                _causalityRedux2.default.getKeys(partition).forEach(function (partitionKey) {
-                    if (_causalityRedux2.default.isCausalityReduxComponent(partition[partitionKey])) {
-                        _causalityRedux2.default.getKeys(historyCache).forEach(function (historyKey) {
-                            if (typeof historyCache[historyKey][topLevelKey][partitionKey] !== 'undefined') historyCache[historyKey][topLevelKey][partitionKey] = partition[partitionKey];
-                        });
-                    }
-                });
+  //
+  // If any new component(s) have been added to the store as a result of hot-reloading
+  // then copy the new component(s) everywhere in the history cache.
+  // Since hot reloading does not happen in production then this is for development only.
+  //
+  if (process.env.NODE_ENV !== 'production') {
+    _causalityRedux2.default.getKeys(state).forEach(function (topLevelKey) {
+      if (isCausalityReduxPartition(topLevelKey)) {
+        var partition = state[topLevelKey];
+        if (typeof partition !== 'undefined') {
+          _causalityRedux2.default.getKeys(partition).forEach(function (partitionKey) {
+            if (_causalityRedux2.default.isCausalityReduxComponent(partition[partitionKey])) {
+              _causalityRedux2.default.getKeys(historyCache).forEach(function (historyKey) {
+                if (typeof historyCache[historyKey][topLevelKey][partitionKey] !== 'undefined') {
+                  historyCache[historyKey][topLevelKey][partitionKey] = partition[partitionKey];
+                }
+              });
             }
-        });
-    }
+          });
+        }
+      }
+    });
+  }
 };
 
 var validKey = function validKey(key) {
-    return typeof key === 'undefined' ? startKey : key;
+  return typeof key === 'undefined' ? startKey : key;
 };
 
 var transitionFromCurrentState = function transitionFromCurrentState(key, action) {
-    var currentState = _causalityRedux2.default.shallowCopyStorePartitions();
-    handleHotReloadedComponents(currentState);
-    if (action === 'REPLACE') delete historyCache[activeKey];else historyCache[activeKey] = currentState;
-    activeKey = key;
+  var currentState = _causalityRedux2.default.shallowCopyStorePartitions();
+  handleHotReloadedComponents(currentState);
+  if (action === 'REPLACE') {
+    delete historyCache[activeKey];
+  } else {
+    historyCache[activeKey] = currentState;
+  }
+  activeKey = key;
 };
 
 var handleListen = function handleListen(location, action) {
-    var i = void 0;
-    var key = validKey(location.key);
-    var stack = [].concat(_toConsumableArray(historyItem.stack));
-    transitionFromCurrentState(key, action);
-    switch (action) {
-        case 'PUSH':
-            // Push can cause history entries to be deleted. So delete their cache entries
-            // if the history is deleting them.
-            for (i = historyItem.index + 1; i < historyItem.stack.length; ++i) {
-                delete historyCache[stack[i].key];
-            }stack.length = historyItem.index + 1;
-            stack.push({ key: key, url: location.pathname });
-            historyItem.index++;
-            break;
-        case 'POP':
-            for (i = 0; stack[i].key !== key; ++i) {}
-            historyItem.index = i;
-            // If this previous history entry has a saved redux store then copy it back to the redux store.
-            if (historyCache[activeKey]) _causalityRedux2.default.copyState(historyCache[activeKey]);
-            break;
-        case 'REPLACE':
-            stack[historyItem.index] = { key: key, url: location.pathname };
-            break;
-    }
-    historyItem.stack = stack;
-    writeHistory();
+  var i = void 0;
+  var key = validKey(location.key);
+  var stack = [].concat(_toConsumableArray(historyItem.stack));
+  transitionFromCurrentState(key, action);
+  switch (action) {
+    case 'PUSH':
+      // Push can cause history entries to be deleted. So delete their cache entries
+      // if the history is deleting them.
+      for (i = historyItem.index + 1; i < historyItem.stack.length; ++i) {
+        delete historyCache[stack[i].key];
+      }
+      stack.length = historyItem.index + 1;
+      stack.push({ key: key, url: location.pathname });
+      historyItem.index++;
+      break;
+    case 'POP':
+      for (i = 0; stack[i].key !== key; ++i) {}
+      historyItem.index = i;
+      // If this previous history entry has a saved redux store then copy it back to the redux store.
+      if (historyCache[activeKey]) {
+        _causalityRedux2.default.copyState(historyCache[activeKey]);
+      }
+      break;
+    case 'REPLACE':
+      stack[historyItem.index] = { key: key, url: location.pathname };
+      break;
+  }
+  historyItem.stack = stack;
+  writeHistory();
 };
 
 var activateHistoryListener = function activateHistoryListener() {
-    unlisten = history.listen(function (location, action) {
-        handleListen(location, action);
-    });
+  unlisten = history.listen(function (location, action) {
+    handleListen(location, action);
+  });
 };
 
 var setHistoryStatePhase1 = null;
 if (process.env.NODE_ENV !== 'production') {
-    var timeoutError = function timeoutError() {
-        return console.log('Something went wrong restoring the history.');
-    };
+  var timeoutError = function timeoutError() {
+    return console.log('Something went wrong restoring the history.');
+  };
 
-    var finishSetHistoryState = function finishSetHistoryState(state, historyPartition, stack) {
-        // Finally, go to the correct route associated with the input state.
-        var index = historyPartition.index;
-        if (stack.length - 1 !== index) history.go(index - stack.length + 1);
+  var finishSetHistoryState = function finishSetHistoryState(state, historyPartition, stack) {
+    // Finally, go to the correct route associated with the input state.
+    var index = historyPartition.index;
+    if (stack.length - 1 !== index) {
+      history.go(index - stack.length + 1);
+    }
 
-        // Set up everything for the chosen state.
-        historyCache = historyPartition.historyCache;
-        historyItem.index = historyPartition.index;
-        historyItem.stack = historyPartition.stack;
+    // Set up everything for the chosen state.
+    historyCache = historyPartition.historyCache;
+    historyItem.index = historyPartition.index;
+    historyItem.stack = historyPartition.stack;
 
-        // New keys for the history now exist.
-        // Must change out the old keys for the correct ones.
-        for (var i = 0; i < historyItem.stack.length; ++i) {
-            var oldKey = historyItem.stack[i].key;
-            var newKey = newKeys[i];
-            historyItem.stack[i].key = newKey;
-            if (typeof historyCache[oldKey] !== 'undefined') {
-                historyCache[newKey] = historyCache[oldKey];
-                delete historyCache[oldKey];
-            }
-            if (historyPartition.activeKey === oldKey) activeKey = newKey;
-        }
-        // Copy the selected state into the redux store.
-        _causalityRedux2.default.copyState(state);
-        // Turn the listener back on
-        setTimeout(activateHistoryListener, 1);
-    };
+    // New keys for the history now exist.
+    // Must change out the old keys for the correct ones.
+    for (var i = 0; i < historyItem.stack.length; ++i) {
+      var oldKey = historyItem.stack[i].key;
+      var newKey = newKeys[i];
+      historyItem.stack[i].key = newKey;
+      if (typeof historyCache[oldKey] !== 'undefined') {
+        historyCache[newKey] = historyCache[oldKey];
+        delete historyCache[oldKey];
+      }
+      if (historyPartition.activeKey === oldKey) {
+        activeKey = newKey;
+      }
+    }
+    // Copy the selected state into the redux store.
+    _causalityRedux2.default.copyState(state);
+    // Turn the listener back on
+    setTimeout(activateHistoryListener, 1);
+  };
 
-    //
-    // Push an entry into the history.
-    // Wait to continue until the async history records the change.
-    // If all entries are pushed move on.
-    //
-    var executePhase4 = function executePhase4(state, historyPartition, stack) {
-        newKeys.push(history.location.key);
-        history.push(stack[historyStackIndex].url);
-        ++historyStackIndex;
-        asyncWait.wait(function () {
-            return history.length === historyStackIndex;
-        }, function () {
-            return setHistoryStatePhase4(state, historyPartition, stack);
-        }, timeoutError);
-    };
+  //
+  // Push an entry into the history.
+  // Wait to continue until the async history records the change.
+  // If all entries are pushed move on.
+  //
+  var executePhase4 = function executePhase4(state, historyPartition, stack) {
+    newKeys.push(history.location.key);
+    history.push(stack[historyStackIndex].url);
+    ++historyStackIndex;
+    asyncWait.wait(function () {
+      return history.length === historyStackIndex;
+    }, function () {
+      return setHistoryStatePhase4(state, historyPartition, stack);
+    }, timeoutError);
+  };
 
-    var setHistoryStatePhase4 = function setHistoryStatePhase4(state, historyPartition, stack, isFirstCall) {
-        if (!isFirstCall && stack.length === history.length) {
-            newKeys.push(history.location.key);
-            finishSetHistoryState(state, historyPartition, stack);
-        } else executePhase4(state, historyPartition, stack);
-    };
+  var setHistoryStatePhase4 = function setHistoryStatePhase4(state, historyPartition, stack, isFirstCall) {
+    if (!isFirstCall && stack.length === history.length) {
+      newKeys.push(history.location.key);
+      finishSetHistoryState(state, historyPartition, stack);
+    } else {
+      executePhase4(state, historyPartition, stack);
+    }
+  };
 
-    //
-    // Set up to execute all the pushed necessary to restore the history to where it was.
-    // Only valid for at least 2 history entries.
-    //
-    var setHistoryStatePhase3 = function setHistoryStatePhase3(state, historyPartition, stack) {
-        historyStackIndex = 1;
-        newKeys = [];
-        if (stack.length === 1 && history.length === 1) {
-            newKeys.push(history.location.key);
-            finishSetHistoryState(state, historyPartition, stack);
-        } else setHistoryStatePhase4(state, historyPartition, stack, true);
-    };
+  //
+  // Set up to execute all the pushed necessary to restore the history to where it was.
+  // Only valid for at least 2 history entries.
+  //
+  var setHistoryStatePhase3 = function setHistoryStatePhase3(state, historyPartition, stack) {
+    historyStackIndex = 1;
+    newKeys = [];
+    if (stack.length === 1 && history.length === 1) {
+      newKeys.push(history.location.key);
+      finishSetHistoryState(state, historyPartition, stack);
+    } else {
+      setHistoryStatePhase4(state, historyPartition, stack, true);
+    }
+  };
 
-    //
-    // Replace the history entry at position 0 with the one in the state.
-    // Wait to continue until the async history records the change.
-    //
-    var setHistoryStatePhase2 = function setHistoryStatePhase2(state) {
-        // Get the history partition.
-        var historyPartition = state[_causalityRedux2.default.storeHistoryKey];
-        var stack = historyPartition.stack;
-        // Replace history position 0 with the state history 0.
-        history.replace(stack[0].url);
-        asyncWait.wait(function () {
-            return history.action === 'REPLACE';
-        }, function () {
-            return setHistoryStatePhase3(state, historyPartition, stack);
-        }, timeoutError);
-    };
+  //
+  // Replace the history entry at position 0 with the one in the state.
+  // Wait to continue until the async history records the change.
+  //
+  var setHistoryStatePhase2 = function setHistoryStatePhase2(state) {
+    // Get the history partition.
+    var historyPartition = state[_causalityRedux2.default.storeHistoryKey];
+    var stack = historyPartition.stack;
+    // Replace history position 0 with the state history 0.
+    history.replace(stack[0].url);
+    asyncWait.wait(function () {
+      return history.action === 'REPLACE';
+    }, function () {
+      return setHistoryStatePhase3(state, historyPartition, stack);
+    }, timeoutError);
+  };
 
-    //
-    // Go to the beginning of the history for this website.
-    // Wait to continue until the async history records the change.
-    //
-    setHistoryStatePhase1 = function setHistoryStatePhase1(state) {
-        // Turn off the history listener.
-        unlisten();
-        history.action = '';
-        // Go to the beginning of the current history.
-        if (historyItem.index !== 0) history.go(-historyItem.index);else history.action = 'POP';
-        asyncWait.wait(function () {
-            return history.action === 'POP';
-        }, function () {
-            return setHistoryStatePhase2(state);
-        }, timeoutError);
-    };
+  //
+  // Go to the beginning of the history for this website.
+  // Wait to continue until the async history records the change.
+  //
+  setHistoryStatePhase1 = function setHistoryStatePhase1(state) {
+    // Turn off the history listener.
+    unlisten();
+    history.action = '';
+    // Go to the beginning of the current history.
+    if (historyItem.index !== 0) {
+      history.go(-historyItem.index);
+    } else {
+      history.action = 'POP';
+    }
+    asyncWait.wait(function () {
+      return history.action === 'POP';
+    }, function () {
+      return setHistoryStatePhase2(state);
+    }, timeoutError);
+  };
 }
 
 function cBH(paramObj) {
-    if (!history) {
-        var homeURL = '/';
-        if (typeof paramObj !== 'undefined' && typeof paramObj.homeURL === 'string') homeURL = paramObj.homeURL;
-        exports.history = history = (0, _createBrowserHistory2.default)(paramObj);
-        activateHistoryListener();
-
-        readHistory();
-        if (historyItem.index === -1) historyItem = { index: 0, stack: [{ key: startKey, url: homeURL }] };
-
-        //
-        // This requires asynchrouous tests because history operations cause asynchronous results.
-        //
-        if (process.env.NODE_ENV !== 'production') {
-            history.setHistoryState = function (state) {
-                if (typeof state === 'undefined' || typeof state[_causalityRedux2.default.storeVersionKey] === 'undefined') throw new Error('Invalid 1st argument.');
-                setHistoryStatePhase1(state);
-            };
-
-            history.setMonitorOn = function () {
-                isMonitor = true;
-                var d = shallowCopy(historyItem);
-                d.historyCache = {};
-                _causalityRedux2.default.addPartitions({ partitionName: _causalityRedux2.default.storeHistoryKey, defaultState: d });
-                historyStore = _causalityRedux2.default.store[_causalityRedux2.default.storeHistoryKey];
-            };
-        }
+  if (!history) {
+    var homeURL = '/';
+    if (typeof paramObj !== 'undefined' && typeof paramObj.homeURL === 'string') {
+      homeURL = paramObj.homeURL;
     }
-    return history;
+    history = (0, _createBrowserHistory2.default)(paramObj);
+    activateHistoryListener();
+
+    readHistory();
+    if (historyItem.index === -1) {
+      historyItem = { index: 0, stack: [{ key: startKey, url: homeURL }] };
+    }
+
+    //
+    // This requires asynchrouous tests because history operations cause asynchronous results.
+    //
+    if (process.env.NODE_ENV !== 'production') {
+      history.setHistoryState = function (state) {
+        if (typeof state === 'undefined' || typeof state[_causalityRedux2.default.storeVersionKey] === 'undefined') {
+          throw new Error('Invalid 1st argument.');
+        }
+        setHistoryStatePhase1(state);
+      };
+
+      history.setMonitorOn = function () {
+        isMonitor = true;
+        var d = shallowCopy(historyItem);
+        d.historyCache = {};
+        _causalityRedux2.default.addPartitions({ partitionName: _causalityRedux2.default.storeHistoryKey, defaultState: d });
+        historyStore = _causalityRedux2.default.store[_causalityRedux2.default.storeHistoryKey];
+      };
+    }
+    _causalityRedux2.default.setOptions({
+      onAddPartition: function onAddPartition(partitionName) {
+        var partitionState = _causalityRedux2.default.store[partitionName].getState();
+        // If the init of the partition is not in any entry in the history cache add it.
+        // This handles code splitting for redux store partitions that are defined after history
+        // has happened.
+        Object.keys(historyCache).forEach(function (key) {
+          if (typeof historyCache[key][partitionName] === 'undefined') {
+            historyCache[key][partitionName] = partitionState;
+          }
+        });
+      }
+    });
+    _causalityRedux2.default.store[_causalityRedux2.default.globalDataKey].setState({ 'history': history });
+  }
+  return history;
 }
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
@@ -1331,24 +1382,25 @@ module.exports = invariant;
 
 /***/ }),
 /* 10 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-
-
-var isAbsolute = function isAbsolute(pathname) {
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+function isAbsolute(pathname) {
   return pathname.charAt(0) === '/';
-};
+}
 
 // About 1.5x faster than the two-arg version of Array#splice()
-var spliceOne = function spliceOne(list, index) {
+function spliceOne(list, index) {
   for (var i = index, k = i + 1, n = list.length; k < n; i += 1, k += 1) {
     list[i] = list[k];
-  }list.pop();
-};
+  }
+
+  list.pop();
+}
 
 // This implementation is based heavily on node's url.parse
-var resolvePathname = function resolvePathname(to) {
+function resolvePathname(to) {
   var from = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 
   var toParts = to && to.split('/') || [];
@@ -1401,29 +1453,28 @@ var resolvePathname = function resolvePathname(to) {
   if (hasTrailingSlash && result.substr(-1) !== '/') result += '/';
 
   return result;
-};
+}
 
-module.exports = resolvePathname;
+/* harmony default export */ __webpack_exports__["default"] = (resolvePathname);
 
 /***/ }),
 /* 11 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-
-
-exports.__esModule = true;
-
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var valueEqual = function valueEqual(a, b) {
+function valueEqual(a, b) {
   if (a === b) return true;
 
   if (a == null || b == null) return false;
 
-  if (Array.isArray(a)) return Array.isArray(b) && a.length === b.length && a.every(function (item, index) {
-    return valueEqual(item, b[index]);
-  });
+  if (Array.isArray(a)) {
+    return Array.isArray(b) && a.length === b.length && a.every(function (item, index) {
+      return valueEqual(item, b[index]);
+    });
+  }
 
   var aType = typeof a === 'undefined' ? 'undefined' : _typeof(a);
   var bType = typeof b === 'undefined' ? 'undefined' : _typeof(b);
@@ -1447,9 +1498,9 @@ var valueEqual = function valueEqual(a, b) {
   }
 
   return false;
-};
+}
 
-exports.default = valueEqual;
+/* harmony default export */ __webpack_exports__["default"] = (valueEqual);
 
 /***/ })
 /******/ ]);

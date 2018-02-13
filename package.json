@@ -1,6 +1,6 @@
 {
   "name": "react-causality-redux-router",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Causality based extension of react-router",
   "main": "lib/react-causality-redux-router.js",
   "scripts": {
@@ -28,11 +28,11 @@
     "lodash": "^4.17.4"
   },
   "dependencies": {
-    "causality-redux": "^2.1.13",
+    "causality-redux": "^2.2.1",
     "history": "^4.7.2"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AndrewBanks10/react-causality-redux"
+    "url": "https://github.com/AndrewBanks10/react-causality-redux-router"
   }
 }
